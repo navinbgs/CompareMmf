@@ -1,418 +1,356 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fund Yield Calculator</title>
-  <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background-color: #f2f2f7;
-      color: #1c1c1e;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Fund Yield Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f2f2f7; /* Light iOS background */
+            color: #1c1c1e;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-    .app {
-      max-width: 500px;
-      margin: 0 auto;
-      padding: 2em 1em;
-    }
+        .app {
+            max-width: 600px; /* Slightly wider for better iPad layout too */
+            margin: 20px auto; /* Add some top/bottom margin */
+            padding: 20px;
+            background-color: #fff; /* White content background */
+            border-radius: 10px; /* More pronounced rounded corners */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
 
-    h1 {
-      font-size: 1.75em;
-      text-align: center;
-      margin-bottom: 1em;
-    }
+        h1 {
+            font-size: 2.0em; /* Slightly larger */
+            text-align: center;
+            margin-bottom: 1.5em;
+            font-weight: 600;
+        }
 
-    label {
-      display: block;
-      margin-top: 1.5em;
-      font-weight: 600;
-    }
+        label {
+            display: block;
+            margin-top: 1.5em;
+            font-weight: 600;
+            color: #333; /* Darker label text */
+        }
 
-    input {
-      width: 100%;
-      padding: 0.5em;
-      margin-top: 0.5em;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      font-size: 1em;
-      box-sizing: border-box;
-    }
+        input[type="number"],
+        input[type="file"] {
+            width: calc(100% - 12px); /* Adjust for padding and border */
+            padding: 10px;
+            margin-top: 0.5em;
+            border: 1px solid #d1d1d6; /* Light gray border */
+            border-radius: 8px; /* Rounded input fields */
+            font-size: 1.0em;
+            box-sizing: border-box;
+        }
 
-    .settings button {
-      margin-top: 1em;
-      width: 100%;
-      padding: 1em;
-      background-color: #007aff;
-      color: white;
-      font-size: 1em;
-      border: none;
-      border-radius: 14px;
-      cursor: pointer;
-    }
+        .settings button {
+            margin-top: 2em;
+            width: 100%;
+            padding: 12px;
+            background-color: #007aff; /* iOS blue */
+            color: white;
+            font-size: 1.0em;
+            border: none;
+            border-radius: 10px; /* Rounded buttons */
+            cursor: pointer;
+            font-weight: 500;
+        }
 
-    .settings input[type="file"] {
-      margin-top: 1em;
-    }
+        .settings button:active {
+            background-color: #0063cc; /* Darker shade for touch feedback */
+        }
 
-    .settings {
-      display: none;
-      margin-top: 1em;
-      background: white;
-      border-radius: 14px;
-      padding: 1em;
-    }
+        .settings {
+            display: none;
+            margin-top: 1.5em;
+            padding: 15px;
+            background-color: #f9f9f9; /* Light background for settings panel */
+            border-radius: 10px;
+            border: 1px solid #e5e5ea;
+        }
 
-    .settings-toggle, .chart-toggle, .csv-toggle {
-      text-align: center;
-      margin-top: 0.5em;
-      color: #007aff;
-      cursor: pointer;
-      display: inline-block;
-      width: 48%;
-    }
+        .settings-toggle, .csv-toggle {
+            text-align: center;
+            margin-top: 1em;
+            color: #007aff;
+            cursor: pointer;
+            display: block; /* Full width for better touch */
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #e5f3ff; /* Light blue background for toggle */
+            border: 1px solid #cce0ff;
+        }
 
-    table {
-      margin-top: 2em;
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 14px;
-      overflow: hidden;
-    }
+        .settings-toggle:active, .csv-toggle:active {
+            background-color: #bdd7ff;
+        }
 
-    th, td {
-      padding: 1em;
-      text-align: left;
-      border-bottom: 1px solid #e5e5ea;
-    }
+        .chart-link {
+            text-align: center;
+            margin-top: 1em;
+            display: block;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #e5f3ff;
+            border: 1px solid #cce0ff;
+            text-decoration: none;
+            color: #007aff;
+        }
 
-    th {
-      background-color: #f9f9f9;
-    }
+        .chart-link:active {
+            background-color: #bdd7ff;
+        }
 
-    .highlight {
-      background-color: #d1f2d1;
-    }
+        table {
+            margin-top: 2em;
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle table shadow */
+        }
 
-    #chartContainer {
-      display: none;
-      margin-top: 2em;
-      background: white;
-      border-radius: 14px;
-      padding: 1em;
-    }
-  </style>
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e5ea;
+        }
+
+        th {
+            background-color: #f9f9f9;
+            font-weight: 600;
+        }
+
+        .highlight {
+            background-color: #d4edda; /* Light green highlight */
+            color: #155724; /* Dark green text for highlight */
+        }
+    </style>
 </head>
 <body>
-  <div class="app">
-    <h1>Fund Yield Calculator</h1>
+    <div class="app">
+        <h1>Fund Yield Calculator</h1>
 
-    <div class="settings-toggle" onclick="toggleSettings()">⚙️ Settings</div>
-    <div class="chart-toggle" onclick="toggleChart()">📈 Chart</div>
-    <div class="csv-toggle" onclick="toggleCSV()">📂 CSV</div>
+        <div class="settings-toggle" onclick="toggleSettings()">⚙️ Settings</div>
+        <a href="chart.html" class="chart-link">📈 Chart</a>
+        <div class="csv-toggle" onclick="toggleCSV()">📂 CSV</div>
 
-    <div class="settings" id="settingsPanel">
-      <label for="federalTax">Federal Tax Rate (%)</label>
-      <input type="number" id="federalTax" value="40.8" min="0" max="50" />
+        <div class="settings" id="settingsPanel">
+            <label for="federalTax">Federal Tax Rate (%)</label>
+            <input type="number" id="federalTax" value="40.8" min="0" max="50" />
 
-      <label for="stateTax">State Tax Rate (%)</label>
-      <input type="number" id="stateTax" value="10.75" min="0" max="20" />
+            <label for="stateTax">State Tax Rate (%)</label>
+            <input type="number" id="stateTax" value="10.75" min="0" max="20" />
 
-      <button onclick="calculateYields()">Calculate</button>
+            <button onclick="calculateYields()">Calculate</button>
+        </div>
+
+        <div class="settings" id="csvPanel" style="display: none;">
+            <button onclick="exportCSV()">Export CSV</button>
+            <input type="file" id="importCSV" accept=".csv" onchange="importCSV(event)" />
+        </div>
+
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Fund</th>
+                    <th>Type</th>
+                    <th>Yield (%)</th>
+                    <th>After-Tax Yield (%)</th>
+                    <th>Tax Equivalent Yield (%)</th>
+                    <th>Data Date</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
+<script>
+    const FUND_US_OBLIGATIONS = {
+        'VMSXX': 0,    // Placeholder value
+        'FSJXX': 0,    // Placeholder value
+        'FTEXX': 0,  // Placeholder value
+        'SPAXX': 56,   // Placeholder value
+        'VUSXX': 100,   // Placeholder value
+        'VMFXX': 63    // Placeholder value
+    };
 
-    <div class="settings" id="csvPanel" style="display: none;">
-      <button onclick="exportCSV()">Export CSV</button>
-      <input type="file" id="importCSV" accept=".csv" onchange="importCSV(event)" />
-    </div>
-
-    <table id="resultsTable">
-      <thead>
-        <tr>
-          <th>Fund</th>
-          <th>Type</th>
-          <th>Yield (%)</th>
-          <th>After-Tax Yield (%)</th>
-          <th>Tax Equivalent Yield (%)</th>
-          <th>Data Date</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <div id="chartContainer">
-      <canvas id="yieldChart"></canvas>
-    </div>
-  </div>
-
-  <script>
     const fundTypes = {
-      'VMSXX': 'Federal Tax-Exempt',
-      'FSJXX': 'Federal and State Tax-Exempt',
-      'FTEXX': 'Federal Tax-Exempt',
-      'SPAXX': 'Taxable',
-      'VUSXX': 'Taxable',
-      'VMFXX': 'Taxable'
+        'VMSXX': 'Federal Tax-Exempt',
+        'FSJXX': 'Federal and State Tax-Exempt',
+        'FTEXX': 'Federal Tax-Exempt',
+        'SPAXX': 'Taxable',
+        'VUSXX': 'Taxable',
+        'VMFXX': 'Taxable'
     };
 
     let chart;
 
     function toggleSettings() {
-      const panel = document.getElementById('settingsPanel');
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    }
-
-    function toggleChart() {
-      const container = document.getElementById('chartContainer');
-      container.style.display = container.style.display === 'none' ? 'block' : 'none';
-      if (container.style.display === 'block') renderChart();
+        const panel = document.getElementById('settingsPanel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     }
 
     function toggleCSV() {
-      const csvPanel = document.getElementById('csvPanel');
-      csvPanel.style.display = csvPanel.style.display === 'none' ? 'block' : 'none';
+        const csvPanel = document.getElementById('csvPanel');
+        csvPanel.style.display = csvPanel.style.display === 'none' ? 'block' : 'none';
     }
 
     async function fetchYields() {
-      try {
-        const response = await fetch('https://moneymarket.fun/data/fundYields.json');
-        const data = await response.json();
+        try {
+            const response = await fetch('https://moneymarket.fun/data/fundYields.json');
+            const data = await response.json();
 
-        const fundsToCompare = ['SPAXX', 'VUSXX', 'VMSXX', 'VMFXX', 'FTEXX', 'FSJXX'];
-        const stored = JSON.parse(localStorage.getItem('fundYieldHistory') || '{}');
+            const fundsToCompare = ['SPAXX', 'VUSXX', 'VMSXX', 'VMFXX', 'FTEXX', 'FSJXX'];
+            const stored = JSON.parse(localStorage.getItem('fundYieldHistory') || '{}');
 
-        const fundDataToday = data.filter(f => fundsToCompare.includes(f.ticker));
-        if (fundDataToday.length > 0) {
-          const dataDate = fundDataToday[0].lastDate;
-          if (!stored[dataDate]) {
-            stored[dataDate] = fundDataToday.map(f => ({
-              ticker: f.ticker,
-              yield: f.yield,
-              lastDate: f.lastDate
-            }));
-            localStorage.setItem('fundYieldHistory', JSON.stringify(stored));
-          }
+            const fundDataToday = data.filter(f => fundsToCompare.includes(f.ticker));
+            if (fundDataToday.length > 0) {
+                const dataDate = fundDataToday[0].lastDate;
+                if (!stored[dataDate]) {
+                    stored[dataDate] = fundDataToday.map(f => ({
+                        ticker: f.ticker,
+                        yield: f.yield,
+                        lastDate: f.lastDate
+                    }));
+                    localStorage.setItem('fundYieldHistory', JSON.stringify(stored));
+                }
+            }
+
+            return stored;
+        } catch (error) {
+            console.error('Error fetching yield data:', error);
+            return null;
         }
-
-        return stored;
-      } catch (error) {
-        console.error('Error fetching yield data:', error);
-        return null;
-      }
     }
 
     function exportCSV() {
-      const data = JSON.parse(localStorage.getItem('fundYieldHistory') || '{}');
-      let csv = 'Date,Ticker,Yield\n';
-      for (const [date, records] of Object.entries(data)) {
-        for (const r of records) {
-          csv += `${date},${r.ticker},${r.yield}\n`;
+        const data = JSON.parse(localStorage.getItem('fundYieldHistory') || '{}');
+        let csv = 'Date,Ticker,Yield\n';
+        for (const [date, records] of Object.entries(data)) {
+            for (const r of records) {
+                csv += `${date},${r.ticker},${r.yield}\n`;
+            }
         }
-      }
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'fundYieldHistory.csv';
-      a.click();
-      URL.revokeObjectURL(url);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'fundYieldHistory.csv';
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     function importCSV(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const lines = reader.result.split('\n');
-        const data = {};
-        for (let i = 1; i < lines.length; i++) {
-          const [date, ticker, yieldVal] = lines[i].split(',');
-          if (!date || !ticker || !yieldVal) continue;
-          if (!data[date]) data[date] = [];
-          data[date].push({ ticker, yield: parseFloat(yieldVal), lastDate: date });
-        }
-        localStorage.setItem('fundYieldHistory', JSON.stringify(data));
-        alert('Yield history imported. Refresh page to see changes.');
-      };
-      reader.readAsText(file);
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            const lines = reader.result.split('\n');
+            const data = {};
+            for (let i = 1; i < lines.length; i++) {
+                const [date, ticker, yieldVal] = lines[i].split(',');
+                if (!date || !ticker || !yieldVal) continue;
+                if (!data[date]) data[date] = [];
+                data[date].push({ ticker, yield: parseFloat(yieldVal), lastDate: date });
+            }
+            localStorage.setItem('fundYieldHistory', JSON.stringify(data));
+            alert('Yield history imported. Refresh page to see changes.');
+        };
+        reader.readAsText(file);
     }
 
-    function calculateAfterTaxYield(yieldPercent, type, federalTax, stateTax) {
-      const yieldDecimal = yieldPercent / 100;
-      const federalTaxDecimal = federalTax / 100;
-      const stateTaxDecimal = stateTax / 100;
+    function calculateAfterTaxYield(yieldPercent, type, federalTax, stateTax, usObligations) {
+        const yieldDecimal = yieldPercent / 100;
+        const federalTaxDecimal = federalTax / 100;
+        const stateTaxDecimal = stateTax / 100;
+        const usObligationsDecimal = usObligations / 100;
 
-      switch (type) {
-        case 'Taxable':
-          return yieldDecimal * (1 - federalTaxDecimal - stateTaxDecimal) * 100;
-        case 'Federal Tax-Exempt':
-          return yieldDecimal * (1 - stateTaxDecimal) * 100;
-        case 'Federal and State Tax-Exempt':
-          return yieldPercent;
-        default:
-          return yieldPercent;
-      }
+        switch (type) {
+            case 'Taxable':
+                return (yieldDecimal * (1 - usObligationsDecimal) * (1 - federalTaxDecimal - stateTaxDecimal) +
+                        yieldDecimal * usObligationsDecimal * (1 - federalTaxDecimal)) * 100;
+            case 'Federal Tax-Exempt':
+                return yieldDecimal * (1 - stateTaxDecimal) * 100;
+            case 'Federal and State Tax-Exempt':
+                return yieldPercent;
+            default:
+                return yieldPercent;
+        }
     }
 
     function calculateTaxEquivalentYield(afterTaxYield, federalTax, stateTax, type) {
-      const federal = federalTax / 100;
-      const state = stateTax / 100;
-      return afterTaxYield / (1 - federal - state);
+        const federal = federalTax / 100;
+        const state = stateTax / 100;
+        return afterTaxYield / (1 - federal - state);
     }
 
-function renderChart() {
-  const rawHistory = JSON.parse(localStorage.getItem('fundYieldHistory') || '{}');
-  const federalTax = parseFloat(document.getElementById('federalTax').value) / 100;
-  const stateTax = parseFloat(document.getElementById('stateTax').value) / 100;
+    async function calculateYields() {
+        const federalTax = parseFloat(document.getElementById('federalTax').value);
+        const stateTax = parseFloat(document.getElementById('stateTax').value);
 
-  const fundList = ['SPAXX', 'VUSXX', 'VMSXX', 'VMFXX', 'FTEXX', 'FSJXX'];
-  const fundType = fundTypes;
+        // Store tax rates in local storage
+        localStorage.setItem('federalTax', federalTax);
+        localStorage.setItem('stateTax', stateTax);
 
-  const dates = Object.keys(rawHistory).sort();
-  const fundSeries = {};
+        const historicalData = await fetchYields();
 
-  // Initialize data structure
-  fundList.forEach(fund => fundSeries[fund] = []);
+        if (!historicalData || Object.keys(historicalData).length === 0) {
+            alert('Failed to fetch or no yield data available.');
+            return;
+        }
 
-  dates.forEach(date => {
-    const records = rawHistory[date];
-    const fundMap = Object.fromEntries(records.map(r => [r.ticker, r]));
+        // Find the most recent date
+        const latestDate = Object.keys(historicalData).sort().reverse()[0];
+        const latestData = historicalData[latestDate];
 
-    fundList.forEach(fund => {
-      const entry = fundMap[fund];
-      if (!entry) {
-        fundSeries[fund].push(null);
-        return;
-      }
+        const fundsToCompare = ['VMSXX', 'FSJXX', 'FTEXX', 'SPAXX', 'VUSXX', 'VMFXX'];
+        const tbody = document.querySelector('#resultsTable tbody');
+        tbody.innerHTML = '';
 
-      const yieldVal = entry.yield / 100;
-      let afterTaxYield;
+        let maxAfterTax = -Infinity;
+        let rows = [];
 
-      if (fundType[fund] === 'Taxable') {
-        afterTaxYield = yieldVal * (1 - federalTax - stateTax);
-      } else if (fundType[fund] === 'Federal Tax-Exempt') {
-        afterTaxYield = yieldVal * (1 - stateTax);
-      } else {
-        afterTaxYield = yieldVal; // Fully tax-exempt
-      }
+        fundsToCompare.forEach(fundTicker => {
+            const fundData = latestData ? latestData.find(item => item.ticker === fundTicker) : null;
+            if (fundData) {
+                const type = fundTypes[fundTicker] || 'Unknown';
+                const yieldPercent = parseFloat(fundData.yield);
+                const usObligations = FUND_US_OBLIGATIONS[fundTicker] || 0; // Default to 0 if not found
+                const afterTaxYield = calculateAfterTaxYield(yieldPercent, type, federalTax, stateTax, usObligations);
+                const taxEquivalentYield = calculateTaxEquivalentYield(afterTaxYield, federalTax, stateTax, type);
 
-      fundSeries[fund].push((afterTaxYield * 100).toFixed(2));
-    });
-  });
+                if (afterTaxYield > maxAfterTax) maxAfterTax = afterTaxYield;
 
-  // Destroy existing chart before rendering new one
-  if (chart) chart.destroy();
-
-  const ctx = document.getElementById('yieldChart').getContext('2d');
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: dates,
-      datasets: fundList.map((fund, i) => ({
-        label: fund,
-        data: fundSeries[fund],
-        borderColor: `hsl(${(i * 60) % 360}, 70%, 50%)`,
-        backgroundColor: 'transparent',
-        tension: 0.3,
-        spanGaps: true
-      }))
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'top'
-        },
-        title: {
-          display: true,
-          text: 'After-Tax Yield Over Time'
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return `${context.dataset.label}: ${context.raw}%`;
+                rows.push({ fund: fundTicker, type, yieldPercent, afterTaxYield, taxEquivalentYield, lastDate: fundData.lastDate });
             }
-          }
-        }
-      },
-      scales: {
-        y: {
-          title: {
-            display: true,
-            text: 'After-Tax Yield (%)'
-          }
-        },
-        x: {
-          title: {
-            display: true,
-            text: 'Date'
-          }
-        }
-      }
+        });
+
+        rows.forEach(row => {
+            const tr = document.createElement('tr');
+            if (row.afterTaxYield === maxAfterTax) tr.classList.add('highlight');
+            tr.innerHTML = `
+                <td>${row.fund}</td>
+                <td>${row.type}</td>
+                <td>${row.yieldPercent.toFixed(2)}</td>
+                <td>${row.afterTaxYield.toFixed(2)}</td>
+                <td>${row.taxEquivalentYield.toFixed(2)}</td>
+                <td>${row.lastDate}</td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
-  });
-}
 
-
-async function calculateYields() {
-  const federalTax = parseFloat(document.getElementById('federalTax').value);
-  const stateTax = parseFloat(document.getElementById('stateTax').value);
-  const historicalData = await fetchYields();
-
-  if (!historicalData || Object.keys(historicalData).length === 0) {
-    alert('Failed to fetch or no yield data available.');
-    return;
-  }
-
-  // Find the most recent date
-  const latestDate = Object.keys(historicalData).sort().reverse()[0];
-  const latestData = historicalData[latestDate];
-
-  const fundsToCompare = ['VMSXX', 'FSJXX', 'FTEXX', 'SPAXX', 'VUSXX', 'VMFXX'];
-  const tbody = document.querySelector('#resultsTable tbody');
-  tbody.innerHTML = '';
-
-  let maxAfterTax = -Infinity;
-  let rows = [];
-
-  fundsToCompare.forEach(fundTicker => {
-    const fundData = latestData ? latestData.find(item => item.ticker === fundTicker) : null;
-    if (fundData) {
-      const type = fundTypes[fundTicker] || 'Unknown';
-      const yieldPercent = parseFloat(fundData.yield);
-      const afterTaxYield = calculateAfterTaxYield(yieldPercent, type, federalTax, stateTax);
-      const taxEquivalentYield = calculateTaxEquivalentYield(afterTaxYield, federalTax, stateTax, type);
-
-      if (afterTaxYield > maxAfterTax) maxAfterTax = afterTaxYield;
-
-      rows.push({ fund: fundTicker, type, yieldPercent, afterTaxYield, taxEquivalentYield, lastDate: fundData.lastDate });
-    }
-  });
-
-  rows.forEach(row => {
-    const tr = document.createElement('tr');
-    if (row.afterTaxYield === maxAfterTax) tr.classList.add('highlight');
-    tr.innerHTML = `
-      <td>${row.fund}</td>
-      <td>${row.type}</td>
-      <td>${row.yieldPercent.toFixed(2)}</td>
-      <td>${row.afterTaxYield.toFixed(2)}</td>
-      <td>${row.taxEquivalentYield.toFixed(2)}</td>
-      <td>${row.lastDate}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  renderChart(); // Ensure the chart is rendered after updating data
-}
     // Show settings by default on first load
     document.getElementById('settingsPanel').style.display = 'none';
     calculateYields();
-  </script>
+</script>
 </body>
 </html>
