@@ -357,6 +357,11 @@
 
             rows.forEach(row => {
                 const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer'; // Make sure cursor indicates clickability
+                tr.onclick = () => {
+                    const lowerCaseFund = row.fund.toLowerCase();
+                    window.location.href = `https://moneymarket.fun/d/${lowerCaseFund}`; // Use lowerCaseFund
+                };
                 if (row.afterTaxYield === maxAfterTax) tr.classList.add('highlight');
                 tr.innerHTML = `
                     <td>${row.fund}</td>
@@ -368,6 +373,7 @@
                 `;
                 tbody.appendChild(tr);
             });
+
         }
 
         // Show settings by default on first load
