@@ -226,6 +226,7 @@
                 // Remove the row-level onclick handler
                 row.onclick = null;
                 row.style.cursor = '';
+                fundCell.style.textDecoration = ''; // Remove URL styling if present
 
                 if (isTableEditable) {
                     // Create input for yield
@@ -244,8 +245,10 @@
                     dateCell.textContent = '';
                     dateCell.appendChild(dateInput);
                 } else {
-                    // Add onclick handler only to the fund cell
+                    // Style the fund cell as a URL
                     fundCell.style.cursor = 'pointer';
+                    fundCell.style.textDecoration = 'underline';
+                    fundCell.style.color = 'blue';
                     fundCell.onclick = () => {
                         const lowerCaseFund = fundCell.textContent.toLowerCase();
                         window.location.href = `https://moneymarket.fun/d/${lowerCaseFund}`;
@@ -434,9 +437,6 @@
 
             rows.forEach(row => {
                 const tr = document.createElement('tr');
-                // Remove row-level cursor and onclick
-                // tr.style.cursor = 'pointer';
-                // tr.onclick = () => { ... };
                 if (row.afterTaxYield === maxAfterTax) tr.classList.add('highlight');
                 tr.innerHTML = `
                     <td class="fund-name">${row.fund}</td>
@@ -453,6 +453,8 @@
             const fundNameCells = document.querySelectorAll('#resultsTable tbody td.fund-name');
             fundNameCells.forEach(cell => {
                 cell.style.cursor = 'pointer';
+                cell.style.textDecoration = 'underline';
+                cell.style.color = 'blue';
                 cell.onclick = () => {
                     const lowerCaseFund = cell.textContent.toLowerCase();
                     window.location.href = `https://moneymarket.fun/d/${lowerCaseFund}`;
