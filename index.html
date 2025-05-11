@@ -143,6 +143,7 @@
         <h1>Fund Yield Calculator</h1>
         <div class="button-bar">
             <button class="settings-toggle" onclick="toggleSettings()">⚙️ Settings</button>
+            <button class="edit-toggle" onclick="toggleEdit()">✏️ Edit Table</button>
             <button class="chart-link" onclick="window.location.href='chart.html'">📈 Chart</button>
             <button class="csv-toggle" onclick="toggleCSV()">📂 CSV</button>
         </div>
@@ -175,12 +176,12 @@
     </div>
     <script>
         const FUND_US_OBLIGATIONS = {
-        'VMSXX': 0,    // Placeholder value
-        'FSJXX': 0,    // Placeholder value
-        'FTEXX': 0,  // Placeholder value
-        'SPAXX': 56,   // Placeholder value
+        'VMSXX': 0,     // Placeholder value
+        'FSJXX': 0,     // Placeholder value
+        'FTEXX': 0,     // Placeholder value
+        'SPAXX': 56,    // Placeholder value
         'VUSXX': 100,   // Placeholder value
-        'VMFXX': 63    // Placeholder value
+        'VMFXX': 63     // Placeholder value
         };
         const fundTypes = {
             'VMSXX': 'Federal Tax-Exempt',
@@ -190,6 +191,100 @@
             'VUSXX': 'Taxable',
             'VMFXX': 'Taxable'
         };
+        let isTableEditable = false;
+        const editButton = document.querySelector('.edit-toggle');
+
+        function toggleEdit() {
+            isTableEditable = !isTableEditable;
+            const table = document.getElementById('resultsTable');
+            const tbody = table.querySelector('tbody');
+
+            if (isTableEditable) {
+                editButton.textContent = '💾 Save Edits';
+            } else {
+                editButton.textContent = '✏️ Edit Table';
+                // Save the edited data to local storage and recalculate
+                saveEditedData();
+                calculateYields();
+            }
+
+            tbody.querySelectorAll('tr').forEach(row => {
+                const yieldCell = row.cells[2];
+                const dateCell = row.cells[5];
+                const fundCell = row.cells[0]; // Get the fund cell
+
+                // Remove any existing input elements
+                const existingYieldInput = yieldCell.querySelector('input[type="number"]');
+                if (existingYieldInput) {
+                    yieldCell.textContent = existingYieldInput.value;
+                }
+                const existingDateInput = dateCell.querySelector('input[type="date"]');
+                if (existingDateInput) {
+                    dateCell.textContent = existingDateInput.value;
+                }
+
+                // Remove the row-level onclick handler
+                row.onclick = null;
+                row.style.cursor = '';
+
+                if (isTableEditable) {
+                    // Create input for yield
+                    const yieldInput = document.createElement('input');
+                    yieldInput.type = 'number';
+                    yieldInput.value = yieldCell.textContent;
+                    yieldInput.min = '0';
+                    yieldInput.step = '0.01';
+                    yieldCell.textContent = '';
+                    yieldCell.appendChild(yieldInput);
+
+                    // Create input for date
+                    const dateInput = document.createElement('input');
+                    dateInput.type = 'date';
+                    dateInput.value = dateCell.textContent;
+                    dateCell.textContent = '';
+                    dateCell.appendChild(dateInput);
+                } else {
+                    // Add onclick handler only to the fund cell
+                    fundCell.style.cursor = 'pointer';
+                    fundCell.onclick = () => {
+                        const lowerCaseFund = fundCell.textContent.toLowerCase();
+                        window.location.href = `https://moneymarket.fun/d/${lowerCaseFund}`;
+                    };
+                }
+            });
+        }
+
+        function saveEditedData() {
+            const table = document.getElementById('resultsTable');
+            const tbody = table.querySelector('tbody');
+            const storedData = JSON.parse(localStorage.getItem('fundYieldHistory') || '{}');
+
+            tbody.querySelectorAll('tr').forEach(row => {
+                const fund = row.cells[0].textContent;
+                const yieldInput = row.cells[2].querySelector('input[type="number"]');
+                const dateInput = row.cells[5].querySelector('input[type="date"]');
+
+                if (yieldInput && dateInput) {
+                    const newYield = parseFloat(yieldInput.value);
+                    const newDate = dateInput.value;
+
+                    if (newDate) {
+                        if (!storedData[newDate]) {
+                            storedData[newDate] = [];
+                        }
+                        const fundEntryIndex = storedData[newDate].findIndex(item => item.ticker === fund);
+                        if (fundEntryIndex > -1) {
+                            storedData[newDate][fundEntryIndex].yield = newYield;
+                            storedData[newDate][fundEntryIndex].lastDate = newDate;
+                        } else {
+                            storedData[newDate].push({ ticker: fund, yield: newYield, lastDate: newDate });
+                        }
+                    }
+                }
+            });
+            localStorage.setItem('fundYieldHistory', JSON.stringify(storedData));
+        }
+
         function toggleSettings() {
             const panel = document.getElementById('settingsPanel');
             panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
@@ -331,6 +426,7 @@
 
                     if (afterTaxYield > maxAfterTax) maxAfterTax = afterTaxYield;
                     rows.push({ fund: fundTicker, type, yieldPercent, afterTaxYield, taxEquivalentYield, lastDate: fundData.lastDate });
+
                 } else {
                     console.warn(`No yield data found for ${fundTicker}.`);
                 }
@@ -338,14 +434,12 @@
 
             rows.forEach(row => {
                 const tr = document.createElement('tr');
-                tr.style.cursor = 'pointer'; // Make sure cursor indicates clickability
-                tr.onclick = () => {
-                    const lowerCaseFund = row.fund.toLowerCase();
-                    window.location.href = `https://moneymarket.fun/d/${lowerCaseFund}`; // Use lowerCaseFund
-                };
+                // Remove row-level cursor and onclick
+                // tr.style.cursor = 'pointer';
+                // tr.onclick = () => { ... };
                 if (row.afterTaxYield === maxAfterTax) tr.classList.add('highlight');
                 tr.innerHTML = `
-                    <td>${row.fund}</td>
+                    <td class="fund-name">${row.fund}</td>
                     <td>${row.type}</td>
                     <td>${row.yieldPercent.toFixed(2)}</td>
                     <td>${row.afterTaxYield.toFixed(2)}</td>
@@ -354,10 +448,21 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            // Add event listeners to the fund name cells after the table is rendered
+            const fundNameCells = document.querySelectorAll('#resultsTable tbody td.fund-name');
+            fundNameCells.forEach(cell => {
+                cell.style.cursor = 'pointer';
+                cell.onclick = () => {
+                    const lowerCaseFund = cell.textContent.toLowerCase();
+                    window.location.href = `https://moneymarket.fun/d/${lowerCaseFund}`;
+                };
+            });
         }
         // Show settings by default on first load
         document.getElementById('settingsPanel').style.display = 'none';
         calculateYields();
     </script>
 </body>
-</html>
+]]
+\\+]+-=-+[[+
