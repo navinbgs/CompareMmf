@@ -177,17 +177,11 @@
     <script>
         const FUND_US_OBLIGATIONS = {
         'VMSXX': 0,     // Placeholder value
-        'FSJXX': 0,     // Placeholder value
-        'FTEXX': 0,     // Placeholder value
-        'SPAXX': 56,    // Placeholder value
         'VUSXX': 100,   // Placeholder value
         'VMFXX': 63     // Placeholder value
         };
         const fundTypes = {
             'VMSXX': 'Federal Tax-Exempt',
-            'FSJXX': 'Federal and State Tax-Exempt',
-            'FTEXX': 'Federal Tax-Exempt',
-            'SPAXX': 'Taxable',
             'VUSXX': 'Taxable',
             'VMFXX': 'Taxable'
         };
@@ -296,15 +290,50 @@
             const csvPanel = document.getElementById('csvPanel');
             csvPanel.style.display = csvPanel.style.display === 'none' ? 'block' : 'none';
         }
+
         async function fetchYields() {
             try {
-                const response = await fetch('https://moneymarket.fun/data/fundYields.json');
-                const data = await response.json();
-
-                const fundsToCompare = ['SPAXX', 'VUSXX', 'VMSXX', 'VMFXX', 'FTEXX', 'FSJXX'];
+                // Replace 'YOUR_GOOGLE_SHEET_DOC_ID_HERE' with your actual Google Sheet Document ID.
+                // The sheet must be published to the web (File > Share > Publish to web)
+                // 'tqx=out:json' requests JSON output.
+                // 'sheet=Sheet1' specifies the tab name. Adjust if your tab is named differently.
+                const GOOGLE_SHEET_DOC_ID = '1fE3LwEIR74IcSM5aEjIpafupKTooLtFHND5fr4u1rOU';
+                const sheetUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_DOC_ID}/gviz/tq?tqx=out:json&sheet=CurrentData`;
+        
+                const response = await fetch(sheetUrl);
+        
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+        
+                const text = await response.text();
+                // The Google Sheets API returns a JSONP-like response (e.g., "google.visualization.Query.setResponse({...});")
+                // We need to extract the raw JSON string from this wrapper.
+                const jsonpData = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const data = JSON.parse(jsonpData);
+        
+                // Check if the expected table structure exists
+                if (!data || !data.table || !data.table.rows) {
+                    throw new Error("Invalid data structure received from Google Sheet.");
+                }
+        
+                // Extract the rows data and transform it into the desired format
+                // Assuming columns are in order: Ticker (c[0]), Yield (c[1]), LastDate (c[2])
+                // Adjust c[index] if your column order is different in Google Sheet
+                const fundDataFromSheet = data.table.rows.map(row => {
+                    return {
+                        ticker: row.c[0] ? row.c[0].v : null,
+                        yield: row.c[1] ? row.c[1].v : null,
+                        lastDate: row.c[2] ? row.c[2].v : null,
+                    };
+                }).filter(fund => fund.ticker && fund.yield); // Filter out rows with missing essential data
+        
+                const fundsToCompare = ['VUSXX', 'VMSXX', 'VMFXX'];
                 const stored = JSON.parse(localStorage.getItem('fundYieldHistory') || '{}');
-                const fundDataToday = data.filter(f => fundsToCompare.includes(f.ticker));
-
+        
+                // Filter the fetched data to only include funds we want to compare
+                const fundDataToday = fundDataFromSheet.filter(f => fundsToCompare.includes(f.ticker));
+        
                 if (fundDataToday.length > 0) {
                     const dataDate = fundDataToday[0].lastDate;
                     if (!stored[dataDate]) {
@@ -319,9 +348,12 @@
                 return stored;
             } catch (error) {
                 console.error('Error fetching yield data:', error);
+                // showMessage('Failed to fetch yield data. Please check the Google Sheet ID and ensure it is published to the web.', 'error'); // Uncomment if you have a showMessage function
                 return JSON.parse(localStorage.getItem('fundYieldHistory') || '{}'); // Return stored data on error
             }
         }
+
+        
         function exportCSV() {
             const data = JSON.parse(localStorage.getItem('fundYieldHistory') || '{}');
             let csv = 'Date,Ticker,Yield\n';
@@ -395,7 +427,7 @@
 
             let maxAfterTax = -Infinity;
             let rows = [];
-            const fundsToCompare = ['VMSXX', 'FSJXX', 'FTEXX', 'SPAXX', 'VUSXX', 'VMFXX'];
+            const fundsToCompare = ['VMSXX', 'VUSXX', 'VMFXX'];
 
             // Find the most recent date from fetched data
             const latestFetchedDate = historicalData && Object.keys(historicalData).length > 0 ? Object.keys(historicalData).sort().reverse()[0] : null;
